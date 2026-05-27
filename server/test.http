@@ -1,0 +1,47 @@
+# 1) Create organization and owner user via tenant signup
+POST http://localhost:3000/tenant-signup
+content-type: application/json
+
+{
+    "organizationName": "Opash Software",
+    "email": "priyanshi@gmail.com",
+    "password": "123456"
+}
+
+###
+# 2) Login as the owner user
+POST http://localhost:3000/login
+content-type: application/json
+
+{
+    "email": "dixit@gmail.com",
+    "password": "123456"
+}
+
+###
+POST http://localhost:3000/invite
+content-type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMTZjZjk3ZjA4NTM5ZjA2MDg5MjU3MyIsInJvbGUiOiJvd25lciIsIm9yZ2FuaXphdGlvbklkIjoiNmExNmNmOTdmMDg1MzlmMDYwODkyNTc0IiwiaWF0IjoxNzc5ODgwMTUyLCJleHAiOjE3Nzk4ODM3NTJ9.uNeWpXgeRQs-OMGWNv1uBATh5T74OccbicFKFvsFfU8
+
+{
+    "email": "dixit@gmail.com",
+    "role": "read_only"
+}
+
+###
+POST http://localhost:3000/invite/accept
+content-type: application/json
+
+{
+    "token": "aecab0e9a558300d456f1f95b6f94a4b29016c3a3e9e5712",
+    "email": "dixit@gmail.com",
+    "password": "123456"
+}
+
+###
+GET http://localhost:3000/users
+
+###
+GET http://localhost:3000/profile
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMTZkMTNhZjA4NTM5ZjA2MDg5MjU3OSIsInJvbGUiOiJyZWFkX29ubHkiLCJvcmdhbml6YXRpb25JZCI6IjZhMTZjZjk3ZjA4NTM5ZjA2MDg5MjU3NCIsImlhdCI6MTc3OTg4MDM0MywiZXhwIjoxNzc5ODgzOTQzfQ.J3j4hRQEVufUelVC6KZKhGyS1mDVaQLsNWw0EV11cO0
