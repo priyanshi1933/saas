@@ -1,6 +1,7 @@
 import React, { useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { tenantSignup } from "../Api/auth";
+import { tenantSignupSchema, validateWithJoi } from "../Validation/userSchema";
 
 const Register = () => {
   const [form, setForm] = useState({
@@ -24,14 +25,15 @@ const Register = () => {
   };
 
   const validate = () => {
+    const { errors: validationErrors, isValid } = validateWithJoi(tenantSignupSchema, form);
     const nextErrors = {
-      organizationName: form.organizationName.trim().length < 2 ? "Organization name is required" : "",
-      email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email) ? "" : "Please enter a valid email",
-      password: form.password.length >= 6 ? "" : "Password must be at least 6 characters",
+      organizationName: validationErrors.organizationName || "",
+      email: validationErrors.email || "",
+      password: validationErrors.password || "",
       general: "",
     };
     setErrors(nextErrors);
-    return !nextErrors.organizationName && !nextErrors.email && !nextErrors.password;
+    return isValid;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

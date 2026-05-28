@@ -1,6 +1,7 @@
 import React, { useMemo, useState, type ChangeEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { acceptInvitation } from "../Api/auth";
+import { acceptInvitationSchema, validateWithJoi, type ValidationErrors } from "../Validation/userSchema";
 
 const AcceptInvitation = () => {
   const [searchParams] = useSearchParams();
@@ -11,17 +12,25 @@ const AcceptInvitation = () => {
     password: "",
   });
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<ValidationErrors<keyof typeof form>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
     setMessage("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { errors: validationErrors, isValid } = validateWithJoi(acceptInvitationSchema, form);
+    setErrors(validationErrors);
+    if (!isValid) {
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await acceptInvitation(form.token, form.email, form.password);
@@ -51,9 +60,10 @@ const AcceptInvitation = () => {
               name="token"
               value={form.token}
               onChange={handleChange}
-              className="form-control"
+              className={`form-control ${errors.token ? "is-invalid" : ""}`}
               placeholder="Paste invite token"
             />
+            <span className="invalid-feedback">{errors.token}</span>
           </label>
 
           <label className="form-label">
@@ -63,9 +73,10 @@ const AcceptInvitation = () => {
               name="email"
               value={form.email}
               onChange={handleChange}
-              className="form-control"
+              className={`form-control ${errors.email ? "is-invalid" : ""}`}
               placeholder="teammate@example.com"
             />
+            <span className="invalid-feedback">{errors.email}</span>
           </label>
 
           <label className="form-label">
@@ -75,9 +86,10 @@ const AcceptInvitation = () => {
               name="password"
               value={form.password}
               onChange={handleChange}
-              className="form-control"
+              className={`form-control ${errors.password ? "is-invalid" : ""}`}
               placeholder="Minimum 6 characters"
             />
+            <span className="invalid-feedback">{errors.password}</span>
           </label>
 
           <button className="btn btn-primary w-100" type="submit" disabled={isSubmitting}>

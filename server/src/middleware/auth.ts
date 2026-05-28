@@ -22,4 +22,12 @@ export const verifyToken=(req:Request,res:Response,next:NextFunction)=>{
     }
 }
 
+export const authorize = (allowedRoles: string[]) => (req: Request, res: Response, next: NextFunction) => {
+    const role = (req as any).user?.role;
+    if (!role || !allowedRoles.includes(role)) {
+        return res.status(403).json({ message: "Forbidden" });
+    }
+    next();
+};
+
 

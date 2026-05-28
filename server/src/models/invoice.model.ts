@@ -4,6 +4,10 @@ export interface IInvoice extends Document {
   organizationId: mongoose.Types.ObjectId;
   clientName: string;
   invoiceNumber: string;
+  lineItems: Array<{ description: string; quantity: number; unitPrice: number; total: number }>;
+  subtotal: number;
+  taxRate: number;
+  discountAmount: number;
   amount: number;
   status: "draft" | "pending" | "paid" | "overdue";
   dueDate: Date;
@@ -28,6 +32,31 @@ const InvoiceSchema: Schema<IInvoice> = new Schema(
       type: String,
       required: true,
       trim: true,
+    },
+    lineItems: [
+      {
+        description: { type: String, required: true, trim: true },
+        quantity: { type: Number, required: true, min: 1 },
+        unitPrice: { type: Number, required: true, min: 0 },
+        total: { type: Number, required: true, min: 0 },
+      },
+    ],
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0,
+    },
+    taxRate: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
+    },
+    discountAmount: {
+      type: Number,
+      required: true,
+      min: 0,
+      default: 0,
     },
     amount: {
       type: Number,

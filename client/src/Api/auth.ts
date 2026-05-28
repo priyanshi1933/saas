@@ -54,19 +54,25 @@ export const createClient = (data: {
 export const createInvoice = (data: {
   clientName: string;
   invoiceNumber: string;
-  amount: string;
   status: string;
-  dueDate: string;
+  dueDate: string | Date;
+  lineItems: Array<{ description: string; quantity: string | number; unitPrice: string | number }>;
+  taxRate: string | number;
+  discountAmount: string | number;
 }) => {
   return api.post("/invoices", data);
 };
 
+export const updateInvoiceStatus = (invoiceId: string, status: string) => {
+  return api.patch(`/invoices/${invoiceId}/status`, { status });
+};
+
 export const createPayment = (data: {
   clientName: string;
-  amount: string;
+  amount: string | number;
   provider: string;
   status: string;
-  paidAt: string;
+  paidAt: string | Date;
 }) => {
   return api.post("/payments", data);
 };
@@ -74,7 +80,7 @@ export const createPayment = (data: {
 export const createSubscription = (data: {
   clientName: string;
   planName: string;
-  amount: string;
+  amount: string | number;
   interval: string;
   status: string;
 }) => {

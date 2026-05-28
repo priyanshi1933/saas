@@ -1,12 +1,22 @@
 import { useEffect, useMemo, useState, type ChangeEvent, type FormEvent, type ReactNode } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import jsPDF from "jspdf";
 import {
   createClient,
   createInvoice,
   createPayment,
   createSubscription,
   getWorkspaceSummary,
+  updateInvoiceStatus as updateInvoiceStatusApi,
 } from "../Api/auth";
+import {
+  clientSchema,
+  invoiceSchema,
+  invoiceStatusValues,
+  paymentSchema,
+  subscriptionSchema,
+  validateWithJoi,
+} from "../Validation/userSchema";
 import TeamPage from "./TeamPage";
 
 type View = "dashboard" | "clients" | "invoices" | "payments" | "subscriptions" | "team";
@@ -84,7 +94,8 @@ const money = (value: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-    maximumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value || 0);
 };
 
@@ -99,6 +110,7 @@ const Dashboard = ({ view }: DashboardProps) => {
   const organizationId = localStorage.getItem("organizationId") || "";
   const [summary, setSummary] = useState<Summary>(emptySummary);
   const [message, setMessage] = useState("");
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [inviteRefreshKey, setInviteRefreshKey] = useState(0);
   const [clientForm, setClientForm] = useState({
     name: "",
@@ -109,9 +121,17 @@ const Dashboard = ({ view }: DashboardProps) => {
   const [invoiceForm, setInvoiceForm] = useState({
     clientName: "",
     invoiceNumber: "",
-    amount: "",
     status: "draft",
     dueDate: "",
+    taxRate: "0",
+    discountAmount: "0",
+    lineItems: [
+      {
+        description: "",
+        quantity: "1",
+        unitPrice: "0",
+      },
+    ],
   });
   const [paymentForm, setPaymentForm] = useState({
     clientName: "",
@@ -129,6 +149,10 @@ const Dashboard = ({ view }: DashboardProps) => {
   });
 
   const canInvite = useMemo(() => ["owner", "admin"].includes(role), [role]);
+  const canManageClients = useMemo(() => ["owner", "admin"].includes(role), [role]);
+  const canManageInvoices = useMemo(() => ["owner", "admin"].includes(role), [role]);
+
+  // Alerts are now dismissible only via the close button; auto-dismiss removed.
 
   const loadSummary = async () => {
     try {
@@ -150,17 +174,127 @@ const Dashboard = ({ view }: DashboardProps) => {
   };
 
   const handleFormChange =
-    <T extends Record<string, string>>(setter: React.Dispatch<React.SetStateAction<T>>) =>
+    <T extends Record<string, unknown>>(setter: React.Dispatch<React.SetStateAction<T>>) =>
     (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
-      setter((prev) => ({ ...prev, [name]: value }));
+      setter((prev) => ({ ...prev, [name]: value } as T));
+      setFormErrors((prev) => ({ ...prev, [name]: "" }));
     };
 
-  const submitAndRefresh = async (e: FormEvent, action: () => Promise<unknown>, successMessage: string) => {
-    e.preventDefault();
+  const handleLineItemChange = (index: number) =>
+    (e: ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setInvoiceForm((prev) => ({
+        ...prev,
+        lineItems: prev.lineItems.map((item, itemIndex) =>
+          itemIndex === index ? { ...item, [name]: value } : item,
+        ),
+      }));
+    };
+
+  const addInvoiceLineItem = () => {
+    setInvoiceForm((prev) => ({
+      ...prev,
+      lineItems: [
+        ...prev.lineItems,
+        { description: "", quantity: "1", unitPrice: "0" },
+      ],
+    }));
+  };
+
+  const removeInvoiceLineItem = (index: number) => {
+    setInvoiceForm((prev) => ({
+      ...prev,
+      lineItems:
+        prev.lineItems.length > 1
+          ? prev.lineItems.filter((_, itemIndex) => itemIndex !== index)
+          : [
+              {
+                description: "",
+                quantity: "1",
+                unitPrice: "0",
+              },
+            ],
+    }));
+  };
+
+  const handleInvoiceStatusChange = async (invoiceId: string, status: string) => {
     try {
-      await action();
+      await updateInvoiceStatusApi(invoiceId, status);
       await loadSummary();
+      setMessage("Invoice status updated.");
+    } catch (error: any) {
+      setMessage(error.response?.data?.message || "Could not update invoice status");
+    }
+  };
+
+  const subtotal = invoiceForm.lineItems.reduce(
+    (sum, item) => sum + Number(item.quantity) * Number(item.unitPrice),
+    0,
+  );
+
+  const taxRate = Number(invoiceForm.taxRate) || 0;
+  const discountAmount = Number(invoiceForm.discountAmount) || 0;
+  const taxAmount = Math.round((subtotal * taxRate) / 100 * 100) / 100;
+  const totalAmount = Math.max(0, Math.round((subtotal + taxAmount - discountAmount) * 100) / 100);
+
+  const downloadInvoicePdf = () => {
+    const doc = new jsPDF({ unit: "pt", format: "a4" });
+    doc.setFontSize(18);
+    doc.text("Invoice", 40, 50);
+    doc.setFontSize(11);
+    doc.text(`Client: ${invoiceForm.clientName || "-"}`, 40, 80);
+    doc.text(`Invoice #: ${invoiceForm.invoiceNumber || "-"}`, 40, 100);
+    doc.text(`Due date: ${invoiceForm.dueDate || "-"}`, 40, 120);
+    doc.text(`Status: ${invoiceForm.status}`, 40, 140);
+    doc.text(`Tax rate: ${taxRate}%`, 40, 160);
+    doc.text(`Discount: ${money(discountAmount)}`, 200, 160);
+
+    const headerY = 190;
+    const rowHeight = 20;
+
+    doc.setFontSize(10);
+    doc.text("Description", 40, headerY);
+    doc.text("Qty", 280, headerY);
+    doc.text("Unit", 335, headerY);
+    doc.text("Line total", 430, headerY);
+
+    invoiceForm.lineItems.forEach((item, index) => {
+      const rowY = headerY + rowHeight * (index + 1);
+      doc.text(item.description || "-", 40, rowY);
+      doc.text(String(item.quantity), 280, rowY);
+      doc.text(Number(item.unitPrice).toFixed(2), 335, rowY);
+      doc.text(money(Number(item.quantity) * Number(item.unitPrice)), 430, rowY);
+    });
+
+    const footerY = headerY + rowHeight * (invoiceForm.lineItems.length + 2);
+    doc.text(`Subtotal: ${money(subtotal)}`, 40, footerY);
+    doc.text(`Tax: ${money(taxAmount)}`, 40, footerY + 20);
+    doc.text(`Discount: ${money(discountAmount)}`, 40, footerY + 40);
+    doc.setFontSize(12);
+    doc.text(`Total: ${money(totalAmount)}`, 40, footerY + 70);
+
+    doc.save(`invoice-${invoiceForm.invoiceNumber || "draft"}.pdf`);
+  };
+
+  const submitAndRefresh = async <T extends Record<string, unknown>>(
+    e: FormEvent,
+    schema: Parameters<typeof validateWithJoi>[0],
+    values: T,
+    action: (validatedValues: T) => Promise<unknown>,
+    successMessage: string,
+  ) => {
+    e.preventDefault();
+    const { errors, isValid, value } = validateWithJoi(schema, values);
+    setFormErrors(errors as Record<string, string>);
+    if (!isValid) {
+      return;
+    }
+
+    try {
+      await action(value);
+      await loadSummary();
+      setFormErrors({});
       setMessage(successMessage);
     } catch (error: any) {
       setMessage(error.response?.data?.message || "Could not save data");
@@ -210,7 +344,12 @@ const Dashboard = ({ view }: DashboardProps) => {
             <small>{organizationId ? organizationId.slice(-8) : "workspace"}</small>
           </div>
         </header>
-        {message && <div className="alert alert-info py-2">{message}</div>}
+        {message && (
+          <div className="alert alert-info py-2 alert-dismissible fade show" role="alert">
+            <div>{message}</div>
+            <button type="button" className="btn-close" aria-label="Close" onClick={() => setMessage("")} />
+          </div>
+        )}
         {children}
       </section>
     </main>
@@ -273,7 +412,21 @@ const Dashboard = ({ view }: DashboardProps) => {
                   <td>{invoice.clientName}</td>
                   <td>{money(invoice.amount)}</td>
                   <td>
-                    <span className={`status-pill ${invoice.status}`}>{invoice.status}</span>
+                    {canManageInvoices ? (
+                      <select
+                        className="form-select"
+                        value={invoice.status}
+                        onChange={(e) => handleInvoiceStatusChange(invoice._id, e.target.value)}
+                      >
+                        {invoiceStatusValues.map((statusValue) => (
+                          <option key={statusValue} value={statusValue}>
+                            {statusValue}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className={`status-pill ${invoice.status}`}>{invoice.status}</span>
+                    )}
                   </td>
                   <td>{dateLabel(invoice.dueDate)}</td>
                 </tr>
@@ -295,32 +448,48 @@ const Dashboard = ({ view }: DashboardProps) => {
               <h2>Add client</h2>
             </div>
           </div>
-          <form
-            className="stack"
-            onSubmit={(e) =>
-              submitAndRefresh(e, () => createClient(clientForm), "Client added.")
-            }
-          >
-            <input className="form-control" name="name" placeholder="Client name" value={clientForm.name} onChange={handleFormChange(setClientForm)} />
-            <input className="form-control" name="taxId" placeholder="Tax ID / GST / VAT" value={clientForm.taxId} onChange={handleFormChange(setClientForm)} />
-            <select className="form-select" name="currency" value={clientForm.currency} onChange={handleFormChange(setClientForm)}>
-              <option value="USD">USD - US Dollar</option>
-              <option value="INR">INR - Indian Rupee</option>
-              <option value="EUR">EUR - Euro</option>
-              <option value="GBP">GBP - British Pound</option>
-              <option value="AUD">AUD - Australian Dollar</option>
-              <option value="CAD">CAD - Canadian Dollar</option>
-            </select>
-            <textarea
-              className="form-control"
-              name="billingAddress"
-              placeholder="Billing address"
-              value={clientForm.billingAddress}
-              onChange={handleFormChange(setClientForm)}
-              rows={4}
-            />
-            <button className="btn btn-primary">Save client</button>
-          </form>
+          {canManageClients ? (
+            <form
+              className="stack"
+              onSubmit={(e) =>
+                submitAndRefresh(e, clientSchema, clientForm, createClient, "Client added.")
+              }
+            >
+              <label className="form-label">Client name</label>
+              <input className={`form-control ${formErrors.name ? "is-invalid" : ""}`} name="name" placeholder="Client name" value={clientForm.name} onChange={handleFormChange(setClientForm)} />
+              <span className="invalid-feedback">{formErrors.name}</span>
+
+              <label className="form-label">Tax ID</label>
+              <input className={`form-control ${formErrors.taxId ? "is-invalid" : ""}`} name="taxId" placeholder="Tax ID / GST / VAT" value={clientForm.taxId} onChange={handleFormChange(setClientForm)} />
+              <span className="invalid-feedback">{formErrors.taxId}</span>
+
+              <label className="form-label">Currency</label>
+              <select className={`form-select ${formErrors.currency ? "is-invalid" : ""}`} name="currency" value={clientForm.currency} onChange={handleFormChange(setClientForm)}>
+                <option value="USD">USD - US Dollar</option>
+                <option value="INR">INR - Indian Rupee</option>
+                <option value="EUR">EUR - Euro</option>
+                <option value="GBP">GBP - British Pound</option>
+                <option value="AUD">AUD - Australian Dollar</option>
+                <option value="CAD">CAD - Canadian Dollar</option>
+              </select>
+              <span className="invalid-feedback">{formErrors.currency}</span>
+
+              <label className="form-label">Billing address</label>
+              <textarea
+                className={`form-control ${formErrors.billingAddress ? "is-invalid" : ""}`}
+                name="billingAddress"
+                placeholder="Billing address"
+                value={clientForm.billingAddress}
+                onChange={handleFormChange(setClientForm)}
+                rows={4}
+              />
+              <span className="invalid-feedback">{formErrors.billingAddress}</span>
+
+              <button className="btn btn-primary">Save client</button>
+            </form>
+          ) : (
+            <p className="muted">Only owners and admins can create clients.</p>
+          )}
         </section>
         <section className="panel wide-panel">
           <h2>Clients</h2>
@@ -351,24 +520,136 @@ const Dashboard = ({ view }: DashboardProps) => {
         <section className="panel">
           <p className="eyebrow">Billing</p>
           <h2>New invoice</h2>
-          <form
-            className="stack form-section"
-            onSubmit={(e) =>
-              submitAndRefresh(e, () => createInvoice(invoiceForm), "Invoice added.")
-            }
-          >
-            <input className="form-control" name="clientName" placeholder="Client name" value={invoiceForm.clientName} onChange={handleFormChange(setInvoiceForm)} />
-            <input className="form-control" name="invoiceNumber" placeholder="Invoice number" value={invoiceForm.invoiceNumber} onChange={handleFormChange(setInvoiceForm)} />
-            <input className="form-control" name="amount" type="number" placeholder="Amount" value={invoiceForm.amount} onChange={handleFormChange(setInvoiceForm)} />
-            <input className="form-control" name="dueDate" type="date" value={invoiceForm.dueDate} onChange={handleFormChange(setInvoiceForm)} />
-            <select className="form-select" name="status" value={invoiceForm.status} onChange={handleFormChange(setInvoiceForm)}>
-              <option value="draft">Draft</option>
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="overdue">Overdue</option>
-            </select>
-            <button className="btn btn-primary">Save invoice</button>
-          </form>
+          {canManageInvoices ? (
+            <form
+              className="stack form-section"
+              onSubmit={(e) =>
+                submitAndRefresh(
+                  e,
+                  invoiceSchema,
+                  invoiceForm,
+                  createInvoice,
+                  "Invoice added.",
+                )
+              }
+            >
+              <label className="form-label">Client name</label>
+              <input className={`form-control ${formErrors.clientName ? "is-invalid" : ""}`} name="clientName" placeholder="Client name" value={invoiceForm.clientName} onChange={handleFormChange(setInvoiceForm)} />
+              <span className="invalid-feedback">{formErrors.clientName}</span>
+
+              <label className="form-label">Invoice number</label>
+              <input className={`form-control ${formErrors.invoiceNumber ? "is-invalid" : ""}`} name="invoiceNumber" placeholder="Invoice number" value={invoiceForm.invoiceNumber} onChange={handleFormChange(setInvoiceForm)} />
+              <span className="invalid-feedback">{formErrors.invoiceNumber}</span>
+
+              <div className="panel nested-panel">
+                <h3>Line items</h3>
+                {invoiceForm.lineItems.map((item, index) => (
+                  <div className="line-item-row" key={index}>
+                    <div style={{ flex: 1 }}>
+                      <label className="form-label">Description</label>
+                      <input
+                        className={`form-control ${formErrors.description ? "is-invalid" : ""}`}
+                        name="description"
+                        placeholder="Description"
+                        value={item.description}
+                        onChange={handleLineItemChange(index)}
+                      />
+                    </div>
+                    <div style={{ width: 100 }}>
+                      <label className="form-label">Qty</label>
+                      <input
+                        className={`form-control ${formErrors.quantity ? "is-invalid" : ""}`}
+                        name="quantity"
+                        type="number"
+                        min="1"
+                        placeholder="Qty"
+                        value={item.quantity}
+                        onChange={handleLineItemChange(index)}
+                      />
+                    </div>
+                    <div style={{ width: 140 }}>
+                      <label className="form-label">Unit</label>
+                      <input
+                        className={`form-control ${formErrors.unitPrice ? "is-invalid" : ""}`}
+                        name="unitPrice"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="Unit price"
+                        value={item.unitPrice}
+                        onChange={handleLineItemChange(index)}
+                      />
+                    </div>
+                    <div style={{ alignSelf: "end" }}>
+                      <button type="button" className="btn btn-danger btn-sm" onClick={() => removeInvoiceLineItem(index)}>
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button type="button" className="btn btn-primary" onClick={addInvoiceLineItem}>
+                  Add line item
+                </button>
+              </div>
+
+              <div className="grid grid-2 gap-2">
+                <div>
+                  <label className="form-label">Tax rate (%)</label>
+                  <input
+                    className={`form-control ${formErrors.taxRate ? "is-invalid" : ""}`}
+                    name="taxRate"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Tax rate (%)"
+                    value={invoiceForm.taxRate}
+                    onChange={handleFormChange(setInvoiceForm)}
+                  />
+                  <span className="invalid-feedback">{formErrors.taxRate}</span>
+                </div>
+                <div>
+                  <label className="form-label">Discount amount</label>
+                  <input
+                    className={`form-control ${formErrors.discountAmount ? "is-invalid" : ""}`}
+                    name="discountAmount"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="Discount amount"
+                    value={invoiceForm.discountAmount}
+                    onChange={handleFormChange(setInvoiceForm)}
+                  />
+                  <span className="invalid-feedback">{formErrors.discountAmount}</span>
+                </div>
+              </div>
+
+              <input className={`form-control ${formErrors.dueDate ? "is-invalid" : ""}`} name="dueDate" type="date" value={invoiceForm.dueDate} onChange={handleFormChange(setInvoiceForm)} />
+              <span className="invalid-feedback">{formErrors.dueDate}</span>
+              <select className={`form-select ${formErrors.status ? "is-invalid" : ""}`} name="status" value={invoiceForm.status} onChange={handleFormChange(setInvoiceForm)}>
+                <option value="draft">Draft</option>
+                <option value="pending">Pending</option>
+                <option value="paid">Paid</option>
+                <option value="overdue">Overdue</option>
+              </select>
+              <span className="invalid-feedback">{formErrors.status}</span>
+
+              <div className="invoice-totals">
+                <div>Subtotal: {money(subtotal)}</div>
+                <div>Tax: {money(taxAmount)}</div>
+                <div>Discount: {money(discountAmount)}</div>
+                <div className="total-row">Total: {money(totalAmount)}</div>
+              </div>
+
+              <div className="button-row">
+                <button type="button" className="btn btn-secondary" onClick={downloadInvoicePdf}>
+                  Download PDF
+                </button>
+                <button className="btn btn-primary">Save invoice</button>
+              </div>
+            </form>
+          ) : (
+            <p className="muted">Only owners and admins can create invoices.</p>
+          )}
         </section>
         {invoiceTable}
       </section>,
@@ -384,18 +665,23 @@ const Dashboard = ({ view }: DashboardProps) => {
           <form
             className="stack form-section"
             onSubmit={(e) =>
-              submitAndRefresh(e, () => createPayment(paymentForm), "Payment added.")
+              submitAndRefresh(e, paymentSchema, paymentForm, createPayment, "Payment added.")
             }
           >
-            <input className="form-control" name="clientName" placeholder="Client name" value={paymentForm.clientName} onChange={handleFormChange(setPaymentForm)} />
-            <input className="form-control" name="amount" type="number" placeholder="Amount" value={paymentForm.amount} onChange={handleFormChange(setPaymentForm)} />
-            <input className="form-control" name="provider" placeholder="Provider" value={paymentForm.provider} onChange={handleFormChange(setPaymentForm)} />
-            <input className="form-control" name="paidAt" type="date" value={paymentForm.paidAt} onChange={handleFormChange(setPaymentForm)} />
-            <select className="form-select" name="status" value={paymentForm.status} onChange={handleFormChange(setPaymentForm)}>
+            <input className={`form-control ${formErrors.clientName ? "is-invalid" : ""}`} name="clientName" placeholder="Client name" value={paymentForm.clientName} onChange={handleFormChange(setPaymentForm)} />
+            <span className="invalid-feedback">{formErrors.clientName}</span>
+            <input className={`form-control ${formErrors.amount ? "is-invalid" : ""}`} name="amount" type="number" placeholder="Amount" value={paymentForm.amount} onChange={handleFormChange(setPaymentForm)} />
+            <span className="invalid-feedback">{formErrors.amount}</span>
+            <input className={`form-control ${formErrors.provider ? "is-invalid" : ""}`} name="provider" placeholder="Provider" value={paymentForm.provider} onChange={handleFormChange(setPaymentForm)} />
+            <span className="invalid-feedback">{formErrors.provider}</span>
+            <input className={`form-control ${formErrors.paidAt ? "is-invalid" : ""}`} name="paidAt" type="date" value={paymentForm.paidAt} onChange={handleFormChange(setPaymentForm)} />
+            <span className="invalid-feedback">{formErrors.paidAt}</span>
+            <select className={`form-select ${formErrors.status ? "is-invalid" : ""}`} name="status" value={paymentForm.status} onChange={handleFormChange(setPaymentForm)}>
               <option value="succeeded">Succeeded</option>
               <option value="pending">Pending</option>
               <option value="failed">Failed</option>
             </select>
+            <span className="invalid-feedback">{formErrors.status}</span>
             <button className="btn btn-primary">Save payment</button>
           </form>
         </section>
@@ -431,22 +717,27 @@ const Dashboard = ({ view }: DashboardProps) => {
           <form
             className="stack form-section"
             onSubmit={(e) =>
-              submitAndRefresh(e, () => createSubscription(subscriptionForm), "Subscription added.")
+              submitAndRefresh(e, subscriptionSchema, subscriptionForm, createSubscription, "Subscription added.")
             }
           >
-            <input className="form-control" name="clientName" placeholder="Client name" value={subscriptionForm.clientName} onChange={handleFormChange(setSubscriptionForm)} />
-            <input className="form-control" name="planName" placeholder="Plan name" value={subscriptionForm.planName} onChange={handleFormChange(setSubscriptionForm)} />
-            <input className="form-control" name="amount" type="number" placeholder="Amount" value={subscriptionForm.amount} onChange={handleFormChange(setSubscriptionForm)} />
-            <select className="form-select" name="interval" value={subscriptionForm.interval} onChange={handleFormChange(setSubscriptionForm)}>
+            <input className={`form-control ${formErrors.clientName ? "is-invalid" : ""}`} name="clientName" placeholder="Client name" value={subscriptionForm.clientName} onChange={handleFormChange(setSubscriptionForm)} />
+            <span className="invalid-feedback">{formErrors.clientName}</span>
+            <input className={`form-control ${formErrors.planName ? "is-invalid" : ""}`} name="planName" placeholder="Plan name" value={subscriptionForm.planName} onChange={handleFormChange(setSubscriptionForm)} />
+            <span className="invalid-feedback">{formErrors.planName}</span>
+            <input className={`form-control ${formErrors.amount ? "is-invalid" : ""}`} name="amount" type="number" placeholder="Amount" value={subscriptionForm.amount} onChange={handleFormChange(setSubscriptionForm)} />
+            <span className="invalid-feedback">{formErrors.amount}</span>
+            <select className={`form-select ${formErrors.interval ? "is-invalid" : ""}`} name="interval" value={subscriptionForm.interval} onChange={handleFormChange(setSubscriptionForm)}>
               <option value="monthly">Monthly</option>
               <option value="yearly">Yearly</option>
             </select>
-            <select className="form-select" name="status" value={subscriptionForm.status} onChange={handleFormChange(setSubscriptionForm)}>
+            <span className="invalid-feedback">{formErrors.interval}</span>
+            <select className={`form-select ${formErrors.status ? "is-invalid" : ""}`} name="status" value={subscriptionForm.status} onChange={handleFormChange(setSubscriptionForm)}>
               <option value="trial">Trial</option>
               <option value="active">Active</option>
               <option value="paused">Paused</option>
               <option value="canceled">Canceled</option>
             </select>
+            <span className="invalid-feedback">{formErrors.status}</span>
             <button className="btn btn-primary">Save subscription</button>
           </form>
         </section>

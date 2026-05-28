@@ -1,5 +1,6 @@
 import React, { useState, type ChangeEvent } from "react";
 import { createInvitation } from "../Api/auth";
+import { inviteSchema, validateWithJoi, type ValidationErrors } from "../Validation/userSchema";
 
 const roleLabels: Record<string, string> = {
   admin: "Admin",
@@ -17,20 +18,23 @@ const InviteTeammate = ({ onInviteCreated }: InviteTeammateProps) => {
     role: "member",
   });
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<ValidationErrors<keyof typeof inviteData>>({});
   const [inviteLink, setInviteLink] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setInviteData((prev) => ({ ...prev, [name]: value }));
+    setErrors((prev) => ({ ...prev, [name]: "" }));
     setMessage("");
     setInviteLink("");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteData.email.trim()) {
-      setMessage("Email is required.");
+    const { errors: validationErrors, isValid } = validateWithJoi(inviteSchema, inviteData);
+    setErrors(validationErrors);
+    if (!isValid) {
       return;
     }
 
@@ -66,18 +70,25 @@ const InviteTeammate = ({ onInviteCreated }: InviteTeammateProps) => {
             name="email"
             value={inviteData.email}
             onChange={handleChange}
-            className="form-control"
+            className={`form-control ${errors.email ? "is-invalid" : ""}`}
             placeholder="teammate@example.com"
           />
+          <span className="invalid-feedback">{errors.email}</span>
         </label>
 
         <label className="form-label">
           Role
-          <select name="role" value={inviteData.role} onChange={handleChange} className="form-select">
+          <select
+            name="role"
+            value={inviteData.role}
+            onChange={handleChange}
+            className={`form-select ${errors.role ? "is-invalid" : ""}`}
+          >
             <option value="admin">Admin</option>
             <option value="member">Member</option>
             <option value="read_only">Read-Only</option>
           </select>
+          <span className="invalid-feedback">{errors.role}</span>
         </label>
 
         <button type="submit" className="btn btn-dark" disabled={isSubmitting}>
