@@ -18,8 +18,8 @@ export const registerUser = (name: string, email: string, password: string, role
   return api.post("/register", { name, email, password, role });
 };
 
-export const tenantSignup = (organizationName: string, email: string, password: string) => {
-  return api.post("/tenant-signup", { organizationName, email, password });
+export const tenantSignup = (organizationName: string, email: string, password: string, firstName?: string, lastName?: string) => {
+  return api.post("/tenant-signup", { organizationName, email, password, firstName, lastName });
 };
 
 export const loginUser = (email: string, password: string) => {

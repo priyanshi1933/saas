@@ -2,15 +2,21 @@ import React, { useState, type ChangeEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { tenantSignup } from "../Api/auth";
 import { tenantSignupSchema, validateWithJoi } from "../Validation/userSchema";
+import { useSettings } from "../SettingsContext";
 
 const Register = () => {
+  const { theme, toggleTheme } = useSettings();
   const [form, setForm] = useState({
     organizationName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
   });
   const [errors, setErrors] = useState({
     organizationName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     general: "",
@@ -28,6 +34,8 @@ const Register = () => {
     const { errors: validationErrors, isValid } = validateWithJoi(tenantSignupSchema, form);
     const nextErrors = {
       organizationName: validationErrors.organizationName || "",
+      firstName: validationErrors.firstName || "",
+      lastName: validationErrors.lastName || "",
       email: validationErrors.email || "",
       password: validationErrors.password || "",
       general: "",
@@ -44,13 +52,22 @@ const Register = () => {
 
     try {
       setIsSubmitting(true);
-      const response = await tenantSignup(form.organizationName, form.email, form.password);
-      const { token, role, organizationId, userId } = response.data.data;
+      const response = await tenantSignup(
+        form.organizationName,
+        form.email,
+        form.password,
+        form.firstName,
+        form.lastName,
+      );
+      const { token, role, organizationId, userId, organizationName, firstName, lastName, email } = response.data.data;
       localStorage.setItem("token", token);
       localStorage.setItem("role", role);
       localStorage.setItem("organizationId", organizationId);
       localStorage.setItem("userId", userId);
-      localStorage.setItem("workspaceName", form.organizationName.trim());
+      localStorage.setItem("organizationName", organizationName.trim());
+      localStorage.setItem("firstName", firstName || "");
+      localStorage.setItem("lastName", lastName || "");
+      localStorage.setItem("userEmail", email || "");
       navigate("/dashboard");
     } catch (error: any) {
       setErrors((prev) => ({
@@ -68,15 +85,20 @@ const Register = () => {
         <div className="auth-copy">
           <p className="eyebrow">Agency workspace</p>
           <h1>Create your billing dashboard</h1>
-          <p>
-            Set up an isolated organization for invoices, client payments, subscriptions, and team access.
-          </p>
+          <p>Set up an isolated organization for invoices, client payments, subscriptions, and team access.</p>
         </div>
 
         <form className="auth-card" onSubmit={handleSubmit}>
-          <div>
-            <p className="eyebrow">Tenant signup</p>
-            <h2>Start workspace</h2>
+          <div className="auth-settings-row">
+            <div>
+              <p className="eyebrow">Tenant signup</p>
+              <h2>Start workspace</h2>
+            </div>
+            <div className="auth-settings">
+              <button type="button" className="btn btn-primary btn-sm" onClick={toggleTheme}>
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </button>
+            </div>
           </div>
 
           {errors.general && <div className="alert alert-danger py-2">{errors.general}</div>}
@@ -92,6 +114,32 @@ const Register = () => {
               placeholder="Pixel & Ledger Studio"
             />
             <span className="invalid-feedback">{errors.organizationName}</span>
+          </label>
+
+          <label className="form-label">
+            First name
+            <input
+              type="text"
+              name="firstName"
+              value={form.firstName}
+              onChange={handleChange}
+              className={`form-control ${errors.firstName ? "is-invalid" : ""}`}
+              placeholder="John"
+            />
+            <span className="invalid-feedback">{errors.firstName}</span>
+          </label>
+
+          <label className="form-label">
+            Last name
+            <input
+              type="text"
+              name="lastName"
+              value={form.lastName}
+              onChange={handleChange}
+              className={`form-control ${errors.lastName ? "is-invalid" : ""}`}
+              placeholder="Doe"
+            />
+            <span className="invalid-feedback">{errors.lastName}</span>
           </label>
 
           <label className="form-label">

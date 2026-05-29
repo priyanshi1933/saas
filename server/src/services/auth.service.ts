@@ -16,7 +16,13 @@ export const register = async (email: string, password: string, role?: string) =
   });
 };
 
-export const tenantSignup = async (email: string, password: string, organizationName: string) => {
+export const tenantSignup = async (
+  email: string,
+  password: string,
+  organizationName: string,
+  firstName?: string,
+  lastName?: string,
+) => {
   const existingUser = await UserModel.findOne({ email: email.toLowerCase() });
   if (existingUser) {
     throw new Error("Email already exists");
@@ -42,6 +48,8 @@ export const tenantSignup = async (email: string, password: string, organization
       _id: ownerId,
       email: email.toLowerCase(),
       password: hashedPassword,
+      firstName: firstName || "",
+      lastName: lastName || "",
       role: "owner",
       organizationId: organization._id,
     });

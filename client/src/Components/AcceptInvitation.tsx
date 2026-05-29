@@ -2,6 +2,7 @@ import React, { useMemo, useState, type ChangeEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { acceptInvitation } from "../Api/auth";
 import { acceptInvitationSchema, validateWithJoi, type ValidationErrors } from "../Validation/userSchema";
+import { useSettings } from "../SettingsContext";
 
 const AcceptInvitation = () => {
   const [searchParams] = useSearchParams();
@@ -11,6 +12,7 @@ const AcceptInvitation = () => {
     email: "",
     password: "",
   });
+  const { theme, toggleTheme } = useSettings();
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<ValidationErrors<keyof typeof form>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,9 +48,16 @@ const AcceptInvitation = () => {
     <main className="auth-shell">
       <section className="auth-panel compact">
         <form className="auth-card" onSubmit={handleSubmit}>
-          <div>
-            <p className="eyebrow">Team invitation</p>
-            <h2>Join workspace</h2>
+          <div className="auth-settings-row">
+            <div>
+              <p className="eyebrow">Team invitation</p>
+              <h2>Join workspace</h2>
+            </div>
+            <div className="auth-settings">
+              <button type="button" className="btn btn-primary btn-sm" onClick={toggleTheme}>
+                {theme === "dark" ? "Light mode" : "Dark mode"}
+              </button>
+            </div>
           </div>
 
           {message && <div className="alert alert-danger py-2">{message}</div>}

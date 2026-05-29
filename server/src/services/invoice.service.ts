@@ -21,11 +21,14 @@ export type InvoiceInput = {
 };
 
 export const getInvoicesByOrganization = async (organizationId: string) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
   await InvoiceModel.updateMany(
     {
       organizationId,
       status: "pending",
-      dueDate: { $lt: new Date() },
+      dueDate: { $lt: today },
     },
     { $set: { status: "overdue" } },
   );

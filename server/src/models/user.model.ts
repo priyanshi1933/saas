@@ -3,6 +3,8 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IUser extends Document {
   email: string;
   password: string;
+  firstName?: string;
+  lastName?: string;
   role: string;
   organizationId?: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -19,6 +21,14 @@ const UserSchema: Schema<IUser> = new Schema<IUser>(
     password: {
       type: String,
       required: true,
+    },
+    firstName: {
+      type: String,
+      default: "",
+    },
+    lastName: {
+      type: String,
+      default: "",
     },
     role: {
       type: String,

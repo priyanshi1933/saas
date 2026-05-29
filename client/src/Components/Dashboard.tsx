@@ -18,6 +18,7 @@ import {
   validateWithJoi,
 } from "../Validation/userSchema";
 import TeamPage from "./TeamPage";
+import { useSettings } from "../SettingsContext";
 
 type View = "dashboard" | "clients" | "invoices" | "payments" | "subscriptions" | "team";
 
@@ -105,9 +106,12 @@ const dateLabel = (value: string) => {
 
 const Dashboard = ({ view }: DashboardProps) => {
   const navigate = useNavigate();
-  const workspaceName = localStorage.getItem("workspaceName") || "Agency Workspace";
+  const { theme, toggleTheme } = useSettings();
+  const organizationName = localStorage.getItem("organizationName") || localStorage.getItem("workspaceName") || "Workspace";
+  const firstName = localStorage.getItem("firstName") || "";
+  const lastName = localStorage.getItem("lastName") || "";
+  const userEmail = localStorage.getItem("userEmail") || "";
   const role = localStorage.getItem("role") || "member";
-  const organizationId = localStorage.getItem("organizationId") || "";
   const [summary, setSummary] = useState<Summary>(emptySummary);
   const [message, setMessage] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -302,12 +306,12 @@ const Dashboard = ({ view }: DashboardProps) => {
   };
 
   const pageTitle: Record<View, string> = {
-    dashboard: "Dashboard",
-    clients: "Clients",
-    invoices: "Invoices",
-    payments: "Payments",
-    subscriptions: "Subscriptions",
-    team: "Team",
+    dashboard: "dashboard",
+    clients: "clients",
+    invoices: "invoices",
+    payments: "payments",
+    subscriptions: "subscriptions",
+    team: "team",
   };
 
   const renderEmpty = (label: string) => <p className="muted empty-state">No {label} added yet.</p>;
@@ -318,7 +322,7 @@ const Dashboard = ({ view }: DashboardProps) => {
         <div>
           <div className="brand-mark">S</div>
           <h1>SaaS Billing</h1>
-          <p>{workspaceName}</p>
+          <p>{organizationName}</p>
         </div>
         <nav className="side-nav">
           <NavLink to="/dashboard">Dashboard</NavLink>
@@ -337,11 +341,18 @@ const Dashboard = ({ view }: DashboardProps) => {
         <header className="topbar">
           <div>
             <p className="eyebrow">Multi-tenant workspace</p>
-            <h2>{pageTitle[view]}</h2>
+            <h2>{pageTitle[view].charAt(0).toUpperCase() + pageTitle[view].slice(1)}</h2>
           </div>
-          <div className="user-chip">
-            <span>{role.replace("_", " ")}</span>
-            <small>{organizationId ? organizationId.slice(-8) : "workspace"}</small>
+          <div className="topbar-actions">
+            <button type="button" className="btn btn-primary btn-sm" onClick={toggleTheme}>
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+            <div className="user-chip">
+              <div>
+                <span>{`${firstName} ${lastName}`.trim() || userEmail}</span>
+                <small>{role.replace("_", " ")}</small>
+              </div>
+            </div>
           </div>
         </header>
         {message && (
