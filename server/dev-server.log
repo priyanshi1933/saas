@@ -1,0 +1,22 @@
+
+> server@1.0.0 dev
+> ts-node-dev --respawn src/index.ts
+
+[INFO] 20:33:44 ts-node-dev ver. 2.0.0 (using ts-node ver. 10.9.2, typescript ver. 6.0.3)
+◇ injected env (5) from .env.local // tip: ⌘ enable debugging { debug: true }
+◇ injected env (0) from src\.env.local // tip: ⌁ auth for agents [www.vestauth.com]
+◇ injected env (0) from .env.local // tip: ⌘ override existing { override: true }
+Server is running on PORT 3000
+MongoDB Connected Successfully
+[INFO] 20:51:44 Restarting: D:\SaaS\saas-main\server\src\routes\route.ts has been modified
+◇ injected env (5) from .env.local // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+[ERROR] 20:54:49 ⨯ Unable to compile TypeScript:
+src/controllers/checkoutLink.controller.ts(13,68): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/checkoutLink.controller.ts(23,73): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/checkoutLink.controller.ts(32,55): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+src/controllers/checkoutLink.controller.ts(50,53): error TS2345: Argument of type 'string | string[]' is not assignable to parameter of type 'string'.
+  Type 'string[]' is not assignable to type 'string'.
+

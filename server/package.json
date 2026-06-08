@@ -1,0 +1,44 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn src/index.ts",
+    "seed": "ts-node src/seed.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "stripe:login": "stripe login",
+    "stripe:listen": "stripe listen --forward-to http://localhost:3001/webhooks/stripe",
+    "stripe:trigger-payment": "stripe trigger checkout.session.completed",
+    "stripe:trigger-invoice-success": "stripe trigger invoice.payment_succeeded",
+    "stripe:trigger-subscription": "stripe trigger customer.subscription.created"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.19",
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/mongoose": "^5.11.96",
+    "@types/node": "^25.9.1",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.6",
+    "crypto": "^1.0.1",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "joi": "^18.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.6.2",
+    "stripe": "^22.2.0"
+  }
+}
