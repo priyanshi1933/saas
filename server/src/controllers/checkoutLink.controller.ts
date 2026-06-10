@@ -2,6 +2,10 @@ import { Request, Response } from "express";
 import {
   completeCheckoutLink,
   createInvoiceCheckoutLink,
+<<<<<<< HEAD
+=======
+  createRazorpayCheckoutForToken,
+>>>>>>> c3eebe6 (first commit)
   createSubscriptionCheckoutLink,
   getCheckoutLinkByToken,
 } from "../services/checkoutLink.service";
@@ -40,6 +44,10 @@ export const getPublicCheckoutLink = async (req: Request, res: Response) => {
         clientName: checkoutLink.clientName,
         title: checkoutLink.title,
         amount: checkoutLink.amount,
+<<<<<<< HEAD
+=======
+        currency: (process.env.RAZORPAY_CURRENCY || "INR").toUpperCase(),
+>>>>>>> c3eebe6 (first commit)
       },
     });
   } catch (error: any) {
@@ -49,7 +57,11 @@ export const getPublicCheckoutLink = async (req: Request, res: Response) => {
 
 export const completePublicCheckoutLink = async (req: Request, res: Response) => {
   try {
+<<<<<<< HEAD
     const checkoutLink = await completeCheckoutLink(param(req.params.token));
+=======
+    const checkoutLink = await completeCheckoutLink(param(req.params.token), req.body);
+>>>>>>> c3eebe6 (first commit)
     res.json({
       success: true,
       data: {
@@ -63,3 +75,23 @@ export const completePublicCheckoutLink = async (req: Request, res: Response) =>
     res.status(400).json({ message: error.message });
   }
 };
+<<<<<<< HEAD
+=======
+
+// export const createPublicRazorpayCheckout = async (req: Request, res: Response) => {
+//   try {
+//     const checkout = await createRazorpayCheckoutForToken(param(req.params.token));
+//     res.status(201).json({ success: true, data: checkout });
+//   } catch (error: any) {
+//     res.status(400).json({ message: error.message });
+//   }
+// };
+export const createPublicRazorpayCheckout = async (req: Request, res: Response) => {
+  try {
+    const checkout = await createRazorpayCheckoutForToken(param(req.params.token));
+    res.status(201).json({ success: true, data: checkout });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+};
+>>>>>>> c3eebe6 (first commit)

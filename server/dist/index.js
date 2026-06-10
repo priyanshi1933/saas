@@ -7,7 +7,11 @@ const express_1 = __importDefault(require("express"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const route_1 = __importDefault(require("./routes/route"));
+<<<<<<< HEAD
 const stripe_controller_1 = require("./controllers/stripe.controller");
+=======
+const razorpay_controller_1 = require("./controllers/razorpay.controller");
+>>>>>>> c3eebe6 (first commit)
 const cors_1 = __importDefault(require("cors"));
 const path_1 = __importDefault(require("path"));
 dotenv_1.default.config({ path: path_1.default.resolve(__dirname, "../.env.local") });
@@ -33,7 +37,11 @@ const corsOptions = {
 };
 const app = (0, express_1.default)();
 app.set('trust proxy', 1);
+<<<<<<< HEAD
 app.post("/webhooks/stripe", express_1.default.raw({ type: "application/json" }), stripe_controller_1.stripeWebhookHandler);
+=======
+app.post("/webhooks/razorpay", express_1.default.raw({ type: "application/json" }), razorpay_controller_1.razorpayWebhookHandler);
+>>>>>>> c3eebe6 (first commit)
 app.use(express_1.default.json());
 app.use((0, cors_1.default)(corsOptions));
 app.use(route_1.default);

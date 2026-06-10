@@ -78,6 +78,7 @@ export const createPayment = (data: {
   return api.post("/payments", data);
 };
 
+<<<<<<< HEAD
 export const createStripePaymentSession = (data: {
   clientName: string;
   amount: string | number;
@@ -85,6 +86,8 @@ export const createStripePaymentSession = (data: {
   return api.post("/stripe/payment-session", data);
 };
 
+=======
+>>>>>>> c3eebe6 (first commit)
 export const createSubscription = (data: {
   clientName: string;
   planName: string;
@@ -94,6 +97,7 @@ export const createSubscription = (data: {
   return api.post("/subscriptions", data);
 };
 
+<<<<<<< HEAD
 export const createStripeSubscriptionSession = (data: {
   clientName: string;
   planName: string;
@@ -103,6 +107,8 @@ export const createStripeSubscriptionSession = (data: {
   return api.post("/stripe/subscription-session", data);
 };
 
+=======
+>>>>>>> c3eebe6 (first commit)
 export const createInvoiceCheckoutLink = (invoiceId: string) => {
   return api.post(`/checkout-links/invoice/${invoiceId}`);
 };
@@ -115,8 +121,28 @@ export const getPublicCheckout = (token: string) => {
   return api.get(`/checkout/${token}`);
 };
 
+<<<<<<< HEAD
 export const completePublicCheckout = (token: string) => {
   return api.post(`/checkout/${token}/complete`);
+=======
+export const createPublicRazorpayCheckout = (token: string) => {
+  return api.post(`/checkout/${token}/razorpay`);
+};
+
+export const cancelSubscription = (subscriptionId: string) => {
+  return api.patch(`/subscriptions/${subscriptionId}/cancel`);
+};
+
+export const completePublicCheckout = (
+  token: string,
+  data: {
+    razorpay_payment_id?: string;
+    razorpay_order_id?: string;
+    razorpay_signature?: string;
+  },
+) => {
+  return api.post(`/checkout/${token}/complete`, data);
+>>>>>>> c3eebe6 (first commit)
 };
 
 export const acceptInvitation = (token: string, email: string, password: string) => {

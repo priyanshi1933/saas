@@ -8,9 +8,15 @@ export interface ISubscription extends Document {
   billingCycle: "monthly" | "yearly";
   status: "trial" | "active" | "paused" | "canceled";
   nextBillingDate: Date;
+<<<<<<< HEAD
   stripeSubscriptionId?: string;
   stripeCustomerId?: string;
   stripeCheckoutSessionId?: string;
+=======
+  currentInvoiceId?: mongoose.Types.ObjectId;
+  razorpaySubscriptionId?: string;
+  razorpayPlanId?: string;
+>>>>>>> c3eebe6 (first commit)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,16 +58,28 @@ const SubscriptionSchema: Schema<ISubscription> = new Schema(
       type: Date,
       required: true,
     },
+<<<<<<< HEAD
     stripeSubscriptionId: {
+=======
+    currentInvoiceId: {
+      type: Schema.Types.ObjectId,
+      ref: "Invoice",
+    },
+    razorpaySubscriptionId: {
+>>>>>>> c3eebe6 (first commit)
       type: String,
       trim: true,
       index: true,
     },
+<<<<<<< HEAD
     stripeCustomerId: {
       type: String,
       trim: true,
     },
     stripeCheckoutSessionId: {
+=======
+    razorpayPlanId: {
+>>>>>>> c3eebe6 (first commit)
       type: String,
       trim: true,
     },

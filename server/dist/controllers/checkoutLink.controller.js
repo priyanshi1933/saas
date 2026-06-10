@@ -1,6 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+<<<<<<< HEAD
 exports.completePublicCheckoutLink = exports.getPublicCheckoutLink = exports.createSubscriptionCheckoutLinkController = exports.createInvoiceCheckoutLinkController = void 0;
+=======
+exports.createPublicRazorpayCheckout = exports.completePublicCheckoutLink = exports.getPublicCheckoutLink = exports.createSubscriptionCheckoutLinkController = exports.createInvoiceCheckoutLinkController = void 0;
+>>>>>>> c3eebe6 (first commit)
 const checkoutLink_service_1 = require("../services/checkoutLink.service");
 const helpers_1 = require("./helpers");
 const param = (value) => (Array.isArray(value) ? value[0] : value);
@@ -37,6 +41,10 @@ const getPublicCheckoutLink = async (req, res) => {
                 clientName: checkoutLink.clientName,
                 title: checkoutLink.title,
                 amount: checkoutLink.amount,
+<<<<<<< HEAD
+=======
+                currency: (process.env.RAZORPAY_CURRENCY || "INR").toUpperCase(),
+>>>>>>> c3eebe6 (first commit)
             },
         });
     }
@@ -47,7 +55,11 @@ const getPublicCheckoutLink = async (req, res) => {
 exports.getPublicCheckoutLink = getPublicCheckoutLink;
 const completePublicCheckoutLink = async (req, res) => {
     try {
+<<<<<<< HEAD
         const checkoutLink = await (0, checkoutLink_service_1.completeCheckoutLink)(param(req.params.token));
+=======
+        const checkoutLink = await (0, checkoutLink_service_1.completeCheckoutLink)(param(req.params.token), req.body);
+>>>>>>> c3eebe6 (first commit)
         res.json({
             success: true,
             data: {
@@ -63,3 +75,16 @@ const completePublicCheckoutLink = async (req, res) => {
     }
 };
 exports.completePublicCheckoutLink = completePublicCheckoutLink;
+<<<<<<< HEAD
+=======
+const createPublicRazorpayCheckout = async (req, res) => {
+    try {
+        const checkout = await (0, checkoutLink_service_1.createRazorpayCheckoutForToken)(param(req.params.token));
+        res.status(201).json({ success: true, data: checkout });
+    }
+    catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+exports.createPublicRazorpayCheckout = createPublicRazorpayCheckout;
+>>>>>>> c3eebe6 (first commit)

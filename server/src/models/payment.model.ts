@@ -8,8 +8,14 @@ export interface IPayment extends Document {
   provider: string;
   status: "succeeded" | "pending" | "failed";
   paidAt: Date;
+<<<<<<< HEAD
   stripePaymentIntentId?: string;
   stripeCheckoutSessionId?: string;
+=======
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  razorpaySubscriptionId?: string;
+>>>>>>> c3eebe6 (first commit)
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,12 +58,25 @@ const PaymentSchema: Schema<IPayment> = new Schema(
       type: Date,
       required: true,
     },
+<<<<<<< HEAD
     stripePaymentIntentId: {
+=======
+    razorpayPaymentId: {
+>>>>>>> c3eebe6 (first commit)
       type: String,
       trim: true,
       index: true,
     },
+<<<<<<< HEAD
     stripeCheckoutSessionId: {
+=======
+    razorpayOrderId: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+    razorpaySubscriptionId: {
+>>>>>>> c3eebe6 (first commit)
       type: String,
       trim: true,
       index: true,

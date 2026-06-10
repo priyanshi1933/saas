@@ -72,12 +72,25 @@ const PaymentSchema = new mongoose_1.Schema({
         type: Date,
         required: true,
     },
+<<<<<<< HEAD
     stripePaymentIntentId: {
+=======
+    razorpayPaymentId: {
+>>>>>>> c3eebe6 (first commit)
         type: String,
         trim: true,
         index: true,
     },
+<<<<<<< HEAD
     stripeCheckoutSessionId: {
+=======
+    razorpayOrderId: {
+        type: String,
+        trim: true,
+        index: true,
+    },
+    razorpaySubscriptionId: {
+>>>>>>> c3eebe6 (first commit)
         type: String,
         trim: true,
         index: true,

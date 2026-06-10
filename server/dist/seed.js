@@ -149,7 +149,11 @@ const seed = async () => {
             organizationId: org._id,
             clientName: "Blue Orbit Agency",
             amount: 2600,
+<<<<<<< HEAD
             provider: "Stripe",
+=======
+            provider: "Razorpay Test",
+>>>>>>> c3eebe6 (first commit)
             status: "succeeded",
             paidAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3),
         },
@@ -157,7 +161,11 @@ const seed = async () => {
             organizationId: org._id,
             clientName: "Northstar Labs",
             amount: 1200,
+<<<<<<< HEAD
             provider: "Stripe",
+=======
+            provider: "Razorpay Test",
+>>>>>>> c3eebe6 (first commit)
             status: "succeeded",
             paidAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 14),
         },

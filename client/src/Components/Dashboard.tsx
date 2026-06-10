@@ -9,6 +9,10 @@ import {
   createSubscription,
   createSubscriptionCheckoutLink,
   getWorkspaceSummary,
+<<<<<<< HEAD
+=======
+   cancelSubscription as cancelSubscriptionApi,
+>>>>>>> c3eebe6 (first commit)
   updateInvoiceStatus as updateInvoiceStatusApi,
 } from "../Api/auth";
 import {
@@ -126,6 +130,18 @@ const dateLabel = (value: string) => {
       })
     : "";
 };
+<<<<<<< HEAD
+=======
+const generateInvoiceNumber = () => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `INV-${y}${m}-${rand}`;
+};
+
+
+>>>>>>> c3eebe6 (first commit)
 
 const Dashboard = ({ view }: DashboardProps) => {
   const navigate = useNavigate();
@@ -147,7 +163,11 @@ const Dashboard = ({ view }: DashboardProps) => {
   });
   const [invoiceForm, setInvoiceForm] = useState({
     clientName: "",
+<<<<<<< HEAD
     invoiceNumber: "",
+=======
+    invoiceNumber: generateInvoiceNumber(),
+>>>>>>> c3eebe6 (first commit)
     status: "draft",
     dueDate: "",
     taxRate: "0",
@@ -207,6 +227,7 @@ const Dashboard = ({ view }: DashboardProps) => {
   };
 
   useEffect(() => {
+<<<<<<< HEAD
     const query = new URLSearchParams(window.location.search);
     if (query.get("fake_payment_success") === "true") {
       setMessage("Fake Stripe payment completed successfully.");
@@ -221,6 +242,22 @@ const Dashboard = ({ view }: DashboardProps) => {
     loadSummary();
   }, []);
 
+=======
+    loadSummary();
+  }, []);
+
+   const handleCancelSubscription = async (subscriptionId: string) => {
+    if (!confirm("Cancel this subscription? This cannot be undone.")) return;
+    try {
+      await cancelSubscriptionApi(subscriptionId);
+      await loadSummary();
+      setMessage("Subscription cancelled.");
+    } catch (error: any) {
+      setMessage(error.response?.data?.message || "Could not cancel subscription");
+    }
+  };
+
+>>>>>>> c3eebe6 (first commit)
   const logout = () => {
     localStorage.clear();
     navigate("/login");
@@ -797,6 +834,7 @@ const Dashboard = ({ view }: DashboardProps) => {
             <form
               className="stack form-section"
               onSubmit={(e) =>
+<<<<<<< HEAD
                 submitAndRefresh(
                   e,
                   invoiceSchema,
@@ -813,6 +851,52 @@ const Dashboard = ({ view }: DashboardProps) => {
               <label className="form-label">Invoice number</label>
               <input className={`form-control ${formErrors.invoiceNumber ? "is-invalid" : ""}`} name="invoiceNumber" placeholder="Invoice number" value={invoiceForm.invoiceNumber} onChange={handleFormChange(setInvoiceForm)} />
               <span className="invalid-feedback">{formErrors.invoiceNumber}</span>
+=======
+  submitAndRefresh(
+    e,
+    invoiceSchema,
+    invoiceForm,
+    createInvoice,
+    "Invoice added.",
+  ).then(() => {
+    setInvoiceForm((prev) => ({
+      ...prev,
+      clientName: "",
+      invoiceNumber: generateInvoiceNumber(),
+    }));
+  })
+}
+            >
+              {/* <label className="form-label">Client name</label>
+              <input className={`form-control ${formErrors.clientName ? "is-invalid" : ""}`} name="clientName" placeholder="Client name" value={invoiceForm.clientName} onChange={handleFormChange(setInvoiceForm)} />
+              <span className="invalid-feedback">{formErrors.clientName}</span> */}
+              <label className="form-label">Client name</label>
+<select
+  className={`form-select ${formErrors.clientName ? "is-invalid" : ""}`}
+  name="clientName"
+  value={invoiceForm.clientName}
+  onChange={handleFormChange(setInvoiceForm)}
+>
+  <option value="">Select a client</option>
+  {summary.clients.map((client) => (
+    <option key={client._id} value={client.name}>
+      {client.name}
+    </option>
+  ))}
+</select>
+<span className="invalid-feedback">{formErrors.clientName}</span>
+
+              {/* <label className="form-label">Invoice number</label>
+              <input className={`form-control ${formErrors.invoiceNumber ? "is-invalid" : ""}`} name="invoiceNumber" placeholder="Invoice number" value={invoiceForm.invoiceNumber} onChange={handleFormChange(setInvoiceForm)} />
+              <span className="invalid-feedback">{formErrors.invoiceNumber}</span> */}
+              <label className="form-label">Invoice number</label>
+<input
+  className="form-control"
+  name="invoiceNumber"
+  value={invoiceForm.invoiceNumber}
+  readOnly
+/>
+>>>>>>> c3eebe6 (first commit)
 
               <div className="line-items-box">
                 <h3>Line items</h3>
@@ -1008,8 +1092,27 @@ const Dashboard = ({ view }: DashboardProps) => {
                 submitAndRefresh(e, subscriptionSchema, subscriptionForm, createSubscription, "Subscription added.")
               }
             >
+<<<<<<< HEAD
               <input className={`form-control ${formErrors.clientName ? "is-invalid" : ""}`} name="clientName" placeholder="Client name" value={subscriptionForm.clientName} onChange={handleFormChange(setSubscriptionForm)} />
               <span className="invalid-feedback">{formErrors.clientName}</span>
+=======
+             {/* Replace clientName input with dropdown */}
+<label className="form-label">Client name</label>
+<select
+  className={`form-select ${formErrors.clientName ? "is-invalid" : ""}`}
+  name="clientName"
+  value={subscriptionForm.clientName}
+  onChange={handleFormChange(setSubscriptionForm)}
+>
+  <option value="">Select a client</option>
+  {summary.clients.map((client) => (
+    <option key={client._id} value={client.name}>
+      {client.name}
+    </option>
+  ))}
+</select>
+<span className="invalid-feedback">{formErrors.clientName}</span>
+>>>>>>> c3eebe6 (first commit)
               <input className={`form-control ${formErrors.planName ? "is-invalid" : ""}`} name="planName" placeholder="Plan name" value={subscriptionForm.planName} onChange={handleFormChange(setSubscriptionForm)} />
               <span className="invalid-feedback">{formErrors.planName}</span>
               <input className={`form-control ${formErrors.amount ? "is-invalid" : ""}`} name="amount" type="number" placeholder="Amount" value={subscriptionForm.amount} onChange={handleFormChange(setSubscriptionForm)} />
@@ -1029,6 +1132,7 @@ const Dashboard = ({ view }: DashboardProps) => {
         </section>
         <section className="panel wide-panel">
           <h2>Subscriptions</h2>
+<<<<<<< HEAD
           {summary.subscriptions.length === 0 ? renderEmpty("subscriptions") : (
             <div className="subscription-list">
               {summary.subscriptions.map((subscription) => (
@@ -1048,6 +1152,40 @@ const Dashboard = ({ view }: DashboardProps) => {
               ))}
             </div>
           )}
+=======
+         {summary.subscriptions.map((subscription) => (
+  <div className="subscription-row" key={subscription._id}>
+    <div>
+      <strong>{subscription.clientName}</strong>
+      <span>{subscription.planName}</span>
+    </div>
+    <div>
+      <strong>{money(subscription.amount)} / {subscription.billingCycle}</strong>
+      <span className={`status-pill ${subscription.status}`}>
+        {subscription.status} — Next: {dateLabel(subscription.nextBillingDate)}
+      </span>
+      <div className="button-row">
+        {subscription.status !== "canceled" && (
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => generateSubscriptionCheckoutLink(subscription._id)}
+          >
+            Copy subscribe link
+          </button>
+        )}
+        {subscription.status !== "canceled" && canManageSubscriptions && (
+          <button
+            className="btn btn-danger btn-sm"
+            onClick={() => handleCancelSubscription(subscription._id)}
+          >
+            Cancel
+          </button>
+        )}
+      </div>
+    </div>
+  </div>
+))}
+>>>>>>> c3eebe6 (first commit)
         </section>
       </section>,
     );

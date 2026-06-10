@@ -9,6 +9,12 @@ export interface ICheckoutLink extends Document {
   title: string;
   amount: number;
   status: "active" | "completed" | "expired";
+<<<<<<< HEAD
+=======
+  razorpayOrderId?: string;
+  razorpaySubscriptionId?: string;
+  razorpayPlanId?: string;
+>>>>>>> c3eebe6 (first commit)
   expiresAt?: Date;
   completedAt?: Date;
   createdAt: Date;
@@ -58,6 +64,23 @@ const CheckoutLinkSchema: Schema<ICheckoutLink> = new Schema(
       enum: ["active", "completed", "expired"],
       default: "active",
     },
+<<<<<<< HEAD
+=======
+    razorpayOrderId: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+    razorpaySubscriptionId: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+    razorpayPlanId: {
+      type: String,
+      trim: true,
+    },
+>>>>>>> c3eebe6 (first commit)
     expiresAt: Date,
     completedAt: Date,
   },

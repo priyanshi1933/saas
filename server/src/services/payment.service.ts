@@ -9,8 +9,14 @@ export type PaymentInput = {
   provider: string;
   status: "succeeded" | "pending" | "failed";
   paidAt: Date;
+<<<<<<< HEAD
   stripePaymentIntentId?: string;
   stripeCheckoutSessionId?: string;
+=======
+  razorpayPaymentId?: string;
+  razorpayOrderId?: string;
+  razorpaySubscriptionId?: string;
+>>>>>>> c3eebe6 (first commit)
 };
 
 export const getPaymentsByOrganization = async (organizationId: string) => {
@@ -27,13 +33,22 @@ export const createPaymentForOrganization = async (input: PaymentInput) => {
   return payment;
 };
 
+<<<<<<< HEAD
 export const upsertStripePayment = async (input: PaymentInput) => {
   if (!input.stripePaymentIntentId) {
+=======
+export const upsertRazorpayPayment = async (input: PaymentInput) => {
+  if (!input.razorpayPaymentId) {
+>>>>>>> c3eebe6 (first commit)
     return await PaymentModel.create(input);
   }
 
   return await PaymentModel.findOneAndUpdate(
+<<<<<<< HEAD
     { stripePaymentIntentId: input.stripePaymentIntentId },
+=======
+    { razorpayPaymentId: input.razorpayPaymentId },
+>>>>>>> c3eebe6 (first commit)
     { $set: input },
     { new: true, upsert: true },
   );

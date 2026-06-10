@@ -71,16 +71,28 @@ const SubscriptionSchema = new mongoose_1.Schema({
         type: Date,
         required: true,
     },
+<<<<<<< HEAD
     stripeSubscriptionId: {
+=======
+    currentInvoiceId: {
+        type: mongoose_1.Schema.Types.ObjectId,
+        ref: "Invoice",
+    },
+    razorpaySubscriptionId: {
+>>>>>>> c3eebe6 (first commit)
         type: String,
         trim: true,
         index: true,
     },
+<<<<<<< HEAD
     stripeCustomerId: {
         type: String,
         trim: true,
     },
     stripeCheckoutSessionId: {
+=======
+    razorpayPlanId: {
+>>>>>>> c3eebe6 (first commit)
         type: String,
         trim: true,
     },

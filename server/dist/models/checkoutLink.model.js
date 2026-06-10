@@ -77,6 +77,23 @@ const CheckoutLinkSchema = new mongoose_1.Schema({
         enum: ["active", "completed", "expired"],
         default: "active",
     },
+<<<<<<< HEAD
+=======
+    razorpayOrderId: {
+        type: String,
+        trim: true,
+        index: true,
+    },
+    razorpaySubscriptionId: {
+        type: String,
+        trim: true,
+        index: true,
+    },
+    razorpayPlanId: {
+        type: String,
+        trim: true,
+    },
+>>>>>>> c3eebe6 (first commit)
     expiresAt: Date,
     completedAt: Date,
 }, { timestamps: true });

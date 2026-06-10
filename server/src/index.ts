@@ -2,18 +2,30 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import router from "./routes/route";
+<<<<<<< HEAD
 import { stripeWebhookHandler } from "./controllers/stripe.controller";
 import cors,{CorsOptions} from "cors";
 import path from "path"
+=======
+import { razorpayWebhookHandler } from "./controllers/razorpay.controller";
+import cors, { CorsOptions } from "cors";
+import path from "path";
+import cron from "node-cron";
+import { generateRenewalInvoices } from "./services/subscription.service";
+>>>>>>> c3eebe6 (first commit)
 
 dotenv.config({ path: path.resolve(__dirname, "../.env.local") });
 
 const getMongoUri = () => {
   const mongoUri = process.env.MONGO_URI;
+<<<<<<< HEAD
   if (!mongoUri) {
     throw new Error("MONGO_URI is required");
   }
 
+=======
+  if (!mongoUri) throw new Error("MONGO_URI is required");
+>>>>>>> c3eebe6 (first commit)
   const separator = mongoUri.includes("?") ? "&" : "?";
   return mongoUri.includes("retryWrites=") ? mongoUri : `${mongoUri}${separator}retryWrites=false`;
 };
@@ -28,12 +40,17 @@ mongoose
 
 const corsOptions: CorsOptions = {
   origin: "http://localhost:5173",
+<<<<<<< HEAD
   methods: ["GET", "POST","PATCH", "PUT", "DELETE"],
+=======
+  methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+>>>>>>> c3eebe6 (first commit)
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 };
 
 const app = express();
+<<<<<<< HEAD
 app.set('trust proxy', 1);
 app.post("/webhooks/stripe", express.raw({ type: "application/json" }), stripeWebhookHandler);
 app.use(express.json());
@@ -45,3 +62,28 @@ app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.listen(PORT, () => {
   console.log(`Server is running on PORT ${PORT}`);
 });
+=======
+app.set("trust proxy", 1);
+
+// Webhook before json parser
+app.post(
+  "/webhook/razorpay",
+  express.raw({ type: "application/json" }),
+  razorpayWebhookHandler,
+);
+
+app.use(cors(corsOptions));
+app.use(express.json());
+app.use(router);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+// ✅ Cron job — runs every day at midnight
+cron.schedule("0 0 * * *", async () => {
+  console.log("Running daily renewal invoice generation...");
+  await generateRenewalInvoices();
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on PORT ${PORT}`);
+});
+>>>>>>> c3eebe6 (first commit)
